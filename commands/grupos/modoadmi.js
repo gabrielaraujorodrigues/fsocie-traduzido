@@ -1,0 +1,147 @@
+import fs from "fs";
+import path from "path";
+
+// ================== DB ==================
+const DB_DIR = path.join(process.cwd(), "database");
+const archivo = path.join(DB_DIR, "modoadmin.json");
+
+let gruposAdmin = new Set();
+
+// Crear carpeta database si no existe
+if (!fs.existsSync(DB_DIR)) fs.mkdirSync(DB_DIR, { recursive: true });
+
+// Cargar datos existentes
+if (fs.existsSync(archivo)) {
+  try {
+    const data = JSON.parse(fs.readFileSync(archivo, "utf-8"));
+    gruposAdmin = new Set(Array.isArray(data) ? data : []);
+  } catch {
+    gruposAdmin = new Set();
+  }
+}
+
+// Guardar cambios
+const guardar = () =>
+  fs.writeFileSync(archivo, JSON.stringify([...gruposAdmin], null, 2));
+
+export default {
+  name: "modoadmin",
+  command: ["modoadmin"],
+  groupOnly: true,
+  adminOnly: true,
+  category: "grupo",
+
+  async run({ sock, from, args, m, msg }) {
+    const quoted = (m?.key || msg?.key) ? { quoted: (m || msg) } : undefined;
+
+    if (!args[0]) {
+      return await sock.sendMessage(
+        from,
+        {
+          text:
+`🛡️ *MODO ADMIN*
+
+📌 *Uso:*
+• .modoadmin on
+• .modoadmin off
+
+✅ *ON:* Solo admins/owner usan comandos
+🚫 *OFF:* Todos pueden usar comandos`,
+          ...global.channelInfo
+        },
+        quoted
+      );
+    }
+
+    const opção = args[0].toLowerCase();
+
+    if (opção === "on") {
+      gruposAdmin.add(from);
+      guardar();
+      return await sock.sendMessage(
+        from,
+        {
+          text:
+`🔒 *Modo admin ativado*
+
+✅ Ahora *solo admins y owner* pueden usar comandos en este grupo.`,
+          ...global.channelInfo
+        },
+        quoted
+      );
+    }
+
+    if (opção === "off") {
+      gruposAdmin.delete(from);
+      guardar();
+      return await sock.sendMessage(
+        from,
+        {
+          text:
+`🔓 *Modo admin desativado*
+
+✅ Ahora *todos* pueden usar comandos en este grupo.`,
+          ...global.channelInfo
+        },
+        quoted
+      );
+    }
+
+    return await sock.sendMessage(
+      from,
+      { text: "❌ Opção inválida. Usa: *on* o *off*", ...global.channelInfo },
+      quoted
+    );
+  },
+
+  // Devuelve true para bloquear ejecución de comandos (así funciona tu index.js)
+  async onMessage({ sock, from, esGrupo, esAdmin, esDono, msg, settings, comandos }) {
+    if (!esGrupo) return;
+    if (!gruposAdmin.has(from)) return;
+
+    // Permitir solo admins y owner
+    if (esAdmin || esDono) return;
+
+    const texto =
+      msg.message?.conversation ||
+      msg.message?.extendedTextMessage?.text ||
+      msg.message?.imageMessage?.caption ||
+      msg.message?.vídeoMessage?.caption ||
+      "";
+
+    const txt = texto.trim();
+    if (!txt) return;
+
+    // ===== MODO SIN PREFIJO =====
+    const noPrefix =
+      settings?.noPrefix === true ||
+      !settings?.prefix ||
+      (Array.isArray(settings.prefix) && settings.prefix.length === 0);
+
+    if (noPrefix) {
+      const posible = txt.split(/\s+/)[0]?.toLowerCase();
+      if (posible && comandos?.has(posible)) {
+        // Bloqueo silencioso para membros normales
+        return true;
+      }
+      return;
+    }
+
+    // ===== CON PREFIJO (string o array) =====
+    const prefixos = Array.isArray(settings.prefix) ? settings.prefix : [settings.prefix];
+    const prefixoUsado = prefixos.filter(Boolean).find((p) => txt.startsWith(p));
+
+    // Si no empieza con prefixo, no es comando → no bloquear
+    if (!prefixoUsado) return;
+
+    // Extraer el comando real después del prefixo
+    const body = txt.slice(prefixoUsado.length).trim();
+    const posibleCmd = body.split(/\s+/)[0]?.toLowerCase();
+
+    // ✅ SOLO bloquear si el comando existe
+    if (posibleCmd && comandos?.has(posibleCmd)) {
+      // Bloqueo silencioso para membros normales
+      return true;
+    }
+  }
+};
