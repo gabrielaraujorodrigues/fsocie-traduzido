@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fsociety — Painel de Controle</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --verde: #25d366;
+      --verde-escuro: #1ebe59;
+      --bg: #080808;
+      --bg2: #101010;
+      --bg3: #161616;
+      --borda: #1e1e1e;
+      --texto: #e4e4e4;
+      --texto2: #888;
+      --vermelho: #ff5555;
+      --amarelo: #f0c040;
+      --azul: #4ea8de;
+    }
+    body {
+      background: var(--bg);
+      color: var(--texto);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      font-size: 14px;
+    }
+
+    /* TOPBAR */
+    .topbar {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--borda);
+      padding: 0 24px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .topbar-marca {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .topbar-marca .icone {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, #1a3a25, #0f2018);
+      border: 1px solid rgba(37,211,102,0.3);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .topbar-marca h1 {
+      font-size: 17px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .topbar-marca h1 span { color: var(--verde); }
+    .topbar-acoes {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .badge-status {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--texto2);
+      background: var(--bg3); border: 1px solid var(--borda);
+      padding: 5px 12px; border-radius: 20px;
+    }
+    .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--verde);
+      box-shadow: 0 0 6px var(--verde);
+      animation: piscar 2s infinite;
+    }
+    .dot.off { background: var(--vermelho); box-shadow: 0 0 6px var(--vermelho); animation: none; }
+    @keyframes piscar { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .btn-sair {
+      padding: 6px 14px;
+      background: transparent;
+      border: 1px solid #333;
+      border-radius: 8px;
+      color: var(--texto2);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-sair:hover { border-color: var(--vermelho); color: var(--vermelho); }
+
+    /* CONTEUDO */
+    .conteudo { padding: 28px 24px; max-width: 1100px; margin: 0 auto; }
+
+    /* ESTATÍSTICAS RÁPIDAS */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--bg2);
+      border: 1px solid var(--borda);
+      border-radius: 14px;
+      padding: 18px 20px;
+    }
+    .stat-card .label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--texto2);
+      margin-bottom: 8px;
+    }
+    .stat-card .valor {
+      font-size: 28px;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1;
+    }
+    .stat-card .valor.verde { color: var(--verde); }
+    .stat-card .valor.vermelho { color: var(--vermelho); }
+    .stat-card .sub {
+      font-size: 12px;
+      color: var(--texto2);
+      margin-top: 4px;
+    }
+
+    /* PROCESSOS */
+    .secao-titulo {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--texto2);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .secao-titulo::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--borda);
+    }
+
+    .processos-lista { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+
+    .processo-card {
+      background: var(--bg2);
+      border: 1px solid var(--borda);
+      border-radius: 14px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: border-color 0.2s;
+    }
+    .processo-card:hover { border-color: #2a2a2a; }
+    .processo-card.online { border-left: 3px solid var(--verde); }
+    .processo-card.parado { border-left: 3px solid var(--vermelho); }
+    .processo-card.erro { border-left: 3px solid var(--amarelo); }
+
+    .processo-nome {
+      flex: 1;
+      min-width: 0;
+    }
+    .processo-nome strong {
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .processo-nome small {
+      font-size: 11px;
+      color: var(--texto2);
+    }
+
+    .processo-info {
+      display: flex;
+      gap: 20px;
+    }
+    .info-item { text-align: center; min-width: 60px; }
+    .info-item .val { font-size: 14px; font-weight: 600; color: #fff; }
+    .info-item .lbl { font-size: 10px; color: var(--texto2); text-transform: uppercase; letter-spacing: 0.3px; margin-top: 1px; }
+
+    .status-badge {
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .status-badge.online { background: rgba(37,211,102,0.12); color: var(--verde); }
+    .status-badge.parado { background: rgba(255,85,85,0.12); color: var(--vermelho); }
+    .status-badge.outro { background: rgba(240,192,64,0.12); color: var(--amarelo); }
+
+    .processo-acoes { display: flex; gap: 6px; }
+    .btn-acao {
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid #2a2a2a;
+      background: transparent;
+      color: var(--texto2);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .btn-acao:hover { border-color: #444; color: #fff; background: #1a1a1a; }
+    .btn-acao.reiniciar:hover { border-color: var(--verde); color: var(--verde); }
+    .btn-acao.parar:hover { border-color: var(--vermelho); color: var(--vermelho); }
+    .btn-acao.logs:hover { border-color: var(--azul); color: var(--azul); }
+    .btn-acao:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* LOGS */
+    .logs-container {
+      background: var(--bg2);
+      border: 1px solid var(--borda);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .logs-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--borda);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logs-header select {
+      background: var(--bg3);
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      color: var(--texto);
+      padding: 5px 10px;
+      font-size: 12px;
+      outline: none;
+      cursor: pointer;
+    }
+    .logs-header .btn-atualizar {
+      padding: 5px 14px;
+      background: var(--bg3);
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      color: var(--texto2);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-left: auto;
+    }
+    .logs-header .btn-atualizar:hover { border-color: var(--verde); color: var(--verde); }
+    .logs-titulo { font-size: 13px; font-weight: 600; color: #fff; }
+    .logs-corpo {
+      padding: 16px 20px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      color: #aaa;
+      line-height: 1.7;
+      max-height: 420px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      background: #050505;
+    }
+    .logs-corpo::-webkit-scrollbar { width: 5px; }
+    .logs-corpo::-webkit-scrollbar-track { background: transparent; }
+    .logs-corpo::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
+    .logs-vazio { color: var(--texto2); font-style: italic; }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      background: var(--bg3);
+      border: 1px solid var(--borda);
+      border-radius: 12px;
+      padding: 12px 18px;
+      font-size: 13px;
+      color: #fff;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      z-index: 999;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.3s;
+      max-width: 320px;
+    }
+    .toast.visivel { transform: translateY(0); opacity: 1; }
+    .toast.sucesso { border-color: rgba(37,211,102,0.3); }
+    .toast.falha { border-color: rgba(255,85,85,0.3); }
+
+    /* VAZIO */
+    .sem-processos {
+      padding: 40px;
+      text-align: center;
+      color: var(--texto2);
+    }
+    .sem-processos p { margin-top: 8px; font-size: 13px; }
+
+    /* RESPONSIVE */
+    @media (max-width: 640px) {
+      .processo-info { display: none; }
+      .conteudo { padding: 16px; }
+      .topbar { padding: 0 16px; }
+    }
+
+    .girar { animation: girar 1s linear infinite; display: inline-block; }
+    @keyframes girar { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-marca">
+    <div class="icone">⚡</div>
+    <h1>Fsociety<span>Bot</span></h1>
+  </div>
+  <div class="topbar-acoes">
+    <div class="badge-status">
+      <div class="dot" id="dotGlobal"></div>
+      <span id="statusGlobal">Carregando...</span>
+    </div>
+    <button class="btn-sair" onclick="sair()">Sair</button>
+  </div>
+</div>
+
+<div class="conteudo">
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="label">Online</div>
+      <div class="valor verde" id="totalOnline">—</div>
+      <div class="sub">processos ativos</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Parados</div>
+      <div class="valor vermelho" id="totalParados">—</div>
+      <div class="sub">processos parados</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Memória Total</div>
+      <div class="valor" id="memoriaTotal">—</div>
+      <div class="sub">em uso (MB)</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Atualizado</div>
+      <div class="valor" id="ultimaAtt" style="font-size:18px">—</div>
+      <div class="sub">última vez</div>
+    </div>
+  </div>
+
+  <!-- Processos -->
+  <div class="secao-titulo">Processos</div>
+  <div class="processos-lista" id="processosLista">
+    <div class="sem-processos">
+      <span class="girar">⟳</span>
+      <p>Carregando processos...</p>
+    </div>
+  </div>
+
+  <!-- Logs -->
+  <div class="secao-titulo">Logs</div>
+  <div class="logs-container">
+    <div class="logs-header">
+      <span class="logs-titulo">📋 Logs do processo</span>
+      <select id="seletorLogs" onchange="carregarLogs()">
+        <option value="">Selecione um processo</option>
+      </select>
+      <button class="btn-atualizar" onclick="carregarLogs()">⟳ Atualizar</button>
+    </div>
+    <div class="logs-corpo" id="logsCorpo">
+      <span class="logs-vazio">Selecione um processo para ver os logs.</span>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let processos = [];
+  let autoRefresh = null;
+
+  function mostrarToast(msg, tipo = 'sucesso') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast visivel ${tipo}`;
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => { t.className = 'toast'; }, 3500);
+  }
+
+  function formatarUptime(ms) {
+    if (!ms) return '—';
+    const seg = Math.floor((Date.now() - ms) / 1000);
+    if (seg < 60) return `${seg}s`;
+    if (seg < 3600) return `${Math.floor(seg/60)}m`;
+    if (seg < 86400) return `${Math.floor(seg/3600)}h ${Math.floor((seg%3600)/60)}m`;
+    return `${Math.floor(seg/86400)}d`;
+  }
+
+  function formatarMemoria(bytes) {
+    if (!bytes) return '0';
+    return (bytes / 1024 / 1024).toFixed(1);
+  }
+
+  function classStatus(status) {
+    if (status === 'online') return 'online';
+    if (status === 'stopped') return 'parado';
+    return 'erro';
+  }
+
+  function labelStatus(status) {
+    const mapa = {
+      'online': 'Online', 'stopped': 'Parado',
+      'stopping': 'Parando', 'launching': 'Iniciando',
+      'errored': 'Erro', 'unknown': 'Desconhecido'
+    };
+    return mapa[status] || status;
+  }
+
+  async function carregarStatus() {
+    try {
+      const resp = await fetch('/api/status');
+      if (resp.status === 401) { window.location.href = '/'; return; }
+      const data = await resp.json();
+      if (!data.ok) return;
+
+      processos = data.processos || [];
+
+      const online = processos.filter(p => p.status === 'online').length;
+      const parados = processos.filter(p => p.status !== 'online').length;
+      const memTotal = processos.reduce((a, p) => a + (p.memoria || 0), 0);
+
+      document.getElementById('totalOnline').textContent = online;
+      document.getElementById('totalParados').textContent = parados;
+      document.getElementById('memoriaTotal').textContent = formatarMemoria(memTotal);
+      document.getElementById('ultimaAtt').textContent = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+      const dot = document.getElementById('dotGlobal');
+      const statusEl = document.getElementById('statusGlobal');
+      if (online > 0) {
+        dot.className = 'dot';
+        statusEl.textContent = `${online} processo${online > 1 ? 's' : ''} online`;
+      } else {
+        dot.className = 'dot off';
+        statusEl.textContent = 'Todos parados';
+      }
+
+      renderizarProcessos(processos);
+      atualizarSeletorLogs(processos);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  function renderizarProcessos(lista) {
+    const el = document.getElementById('processosLista');
+    if (!lista.length) {
+      el.innerHTML = '<div class="sem-processos"><span>🤖</span><p>Nenhum processo encontrado. Inicie o bot com pm2.</p></div>';
+      return;
+    }
+
+    el.innerHTML = lista.map(p => {
+      const cls = classStatus(p.status);
+      const statusBadgeCls = p.status === 'online' ? 'online' : p.status === 'stopped' ? 'parado' : 'outro';
+      return `
+        <div class="processo-card ${cls}">
+          <div class="processo-nome">
+            <strong>${p.nome}</strong>
+            <small>PID: ${p.pid || '—'} &nbsp;·&nbsp; Reinicializações: ${p.reinicializacoes || 0}</small>
+          </div>
+          <div class="processo-info">
+            <div class="info-item">
+              <div class="val">${formatarMemoria(p.memoria)} MB</div>
+              <div class="lbl">Memória</div>
+            </div>
+            <div class="info-item">
+              <div class="val">${p.cpu || 0}%</div>
+              <div class="lbl">CPU</div>
+            </div>
+            <div class="info-item">
+              <div class="val">${formatarUptime(p.uptime)}</div>
+              <div class="lbl">Uptime</div>
+            </div>
+          </div>
+          <span class="status-badge ${statusBadgeCls}">${labelStatus(p.status)}</span>
+          <div class="processo-acoes">
+            <button class="btn-acao reiniciar" onclick="acao('${p.nome}', 'reiniciar', this)" title="Reiniciar">↺ Reiniciar</button>
+            ${p.status === 'online'
+              ? `<button class="btn-acao parar" onclick="acao('${p.nome}', 'parar', this)" title="Parar">■ Parar</button>`
+              : `<button class="btn-acao" onclick="acao('${p.nome}', 'iniciar', this)" title="Iniciar">▶ Iniciar</button>`
+            }
+            <button class="btn-acao logs" onclick="verLogs('${p.nome}')" title="Ver logs">📋 Logs</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function atualizarSeletorLogs(lista) {
+    const sel = document.getElementById('seletorLogs');
+    const atual = sel.value;
+    sel.innerHTML = '<option value="">Selecione um processo</option>' +
+      lista.map(p => `<option value="${p.nome}" ${p.nome === atual ? 'selected' : ''}>${p.nome}</option>`).join('');
+  }
+
+  async function acao(nome, tipo, btn) {
+    btn.disabled = true;
+    const txtOriginal = btn.textContent;
+    btn.textContent = '...';
+    try {
+      const resp = await fetch(`/api/processo/${encodeURIComponent(nome)}/${tipo}`, { method: 'POST' });
+      const data = await resp.json();
+      if (data.ok) {
+        mostrarToast(data.mensagem || 'Feito!', 'sucesso');
+        setTimeout(carregarStatus, 1000);
+      } else {
+        mostrarToast(data.erro || 'Erro ao executar ação', 'falha');
+      }
+    } catch (err) {
+      mostrarToast('Erro de conexão', 'falha');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = txtOriginal;
+    }
+  }
+
+  function verLogs(nome) {
+    document.getElementById('seletorLogs').value = nome;
+    carregarLogs();
+    document.querySelector('.logs-container').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  async function carregarLogs() {
+    const nome = document.getElementById('seletorLogs').value;
+    const el = document.getElementById('logsCorpo');
+    if (!nome) {
+      el.innerHTML = '<span class="logs-vazio">Selecione um processo para ver os logs.</span>';
+      return;
+    }
+    el.textContent = 'Carregando logs...';
+    try {
+      const resp = await fetch(`/api/logs/${encodeURIComponent(nome)}?linhas=80`);
+      const data = await resp.json();
+      el.textContent = data.logs || '(sem logs disponíveis)';
+      el.scrollTop = el.scrollHeight;
+    } catch {
+      el.textContent = 'Erro ao carregar logs.';
+    }
+  }
+
+  async function sair() {
+    await fetch('/api/logout', { method: 'POST' });
+    window.location.href = '/';
+  }
+
+  // Init
+  carregarStatus();
+  autoRefresh = setInterval(() => {
+    carregarStatus();
+    if (document.getElementById('seletorLogs').value) carregarLogs();
+  }, 8000);
+</script>
+</body>
+</html>

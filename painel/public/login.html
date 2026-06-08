@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fsociety — Painel de Controle</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #080808;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-image: radial-gradient(ellipse at 50% 0%, rgba(37,211,102,0.06) 0%, transparent 60%);
+    }
+    .wrapper {
+      width: 100%;
+      max-width: 400px;
+      padding: 24px;
+    }
+    .card {
+      background: #121212;
+      border: 1px solid #222;
+      border-radius: 20px;
+      padding: 44px 40px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(37,211,102,0.05);
+    }
+    .logo {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    .logo-icon {
+      width: 64px; height: 64px;
+      background: linear-gradient(135deg, #1a3a25, #0f2018);
+      border: 1px solid rgba(37,211,102,0.3);
+      border-radius: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 24px rgba(37,211,102,0.1);
+    }
+    .logo h1 {
+      font-size: 24px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+    .logo h1 span { color: #25d366; }
+    .logo p {
+      color: #555;
+      font-size: 13px;
+      margin-top: 5px;
+    }
+    .campo { margin-bottom: 20px; }
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    input[type="password"] {
+      width: 100%;
+      padding: 13px 16px;
+      background: #0a0a0a;
+      border: 1.5px solid #252525;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      letter-spacing: 2px;
+    }
+    input[type="password"]:focus {
+      border-color: #25d366;
+      box-shadow: 0 0 0 3px rgba(37,211,102,0.1);
+    }
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background: #25d366;
+      color: #000;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(37,211,102,0.3);
+    }
+    .btn:hover { background: #20c45c; box-shadow: 0 6px 24px rgba(37,211,102,0.4); }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .erro {
+      background: rgba(255,80,80,0.08);
+      border: 1px solid rgba(255,80,80,0.25);
+      color: #ff6b6b;
+      padding: 11px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      margin-top: 14px;
+      display: none;
+      text-align: center;
+    }
+    .rodape {
+      text-align: center;
+      margin-top: 28px;
+      font-size: 12px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="card">
+      <div class="logo">
+        <div class="logo-icon">⚡</div>
+        <h1>Fsociety<span>Bot</span></h1>
+        <p>Painel de Controle</p>
+      </div>
+      <div class="campo">
+        <label for="senha">Senha de acesso</label>
+        <input type="password" id="senha" placeholder="••••••••" autocomplete="current-password" autofocus />
+      </div>
+      <button class="btn" id="btnEntrar" onclick="entrar()">Entrar no Painel</button>
+      <div class="erro" id="erro">Senha incorreta. Tente novamente.</div>
+    </div>
+    <p class="rodape">Fsociety Bot &mdash; Painel de Controle</p>
+  </div>
+  <script>
+    document.getElementById('senha').addEventListener('keydown', e => {
+      if (e.key === 'Enter') entrar();
+    });
+
+    async function entrar() {
+      const senha = document.getElementById('senha').value.trim();
+      const erro = document.getElementById('erro');
+      const btn = document.getElementById('btnEntrar');
+      if (!senha) return;
+      erro.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = 'Entrando...';
+      try {
+        const resp = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ senha })
+        });
+        const data = await resp.json();
+        if (data.ok) {
+          window.location.href = '/';
+        } else {
+          erro.style.display = 'block';
+          document.getElementById('senha').value = '';
+          document.getElementById('senha').focus();
+        }
+      } catch {
+        erro.style.display = 'block';
+        erro.textContent = 'Erro de conexão. Tente novamente.';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Entrar no Painel';
+      }
+    }
+  </script>
+</body>
+</html>

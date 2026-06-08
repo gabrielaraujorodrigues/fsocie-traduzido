@@ -30,6 +30,23 @@ const baseApp = {
 };
 
 const apps = [
+  // Painel de controle web
+  {
+    name: "dvyer-painel",
+    script: path.join(cwd, "painel/server.cjs"),
+    cwd,
+    watch: false,
+    autorestart: true,
+    max_restarts: 10,
+    restart_delay: 2000,
+    env: {
+      NODE_ENV: process.env.NODE_ENV || "production",
+      PORT: process.env.PORT || 3000,
+      PANEL_PASSWORD: process.env.PANEL_PASSWORD || "admin123",
+      SESSION_SECRET: process.env.SESSION_SECRET || "fsociety-troque-esta-chave",
+    },
+  },
+  // Bot principal
   {
     ...baseApp,
     name: "dvyer-main",
